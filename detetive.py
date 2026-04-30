@@ -8,8 +8,7 @@ load_dotenv()
 # CORREÇÃO AQUI: 
 # Opção A: Se você tem um arquivo .env, use: SERPAPI_API_KEY = os.getenv("SERPAPI_KEY")
 # Opção B (Mais rápida para testar): Coloque a chave direto na variável:
-SERPAPI_API_KEY = "GROQ_API_KEY=your_api_key_here
-"
+SERPAPI_API_KEY = "SUA_CHAVE_AQUI"  # Substitua pela sua chave real
 
 app = Flask(__name__)
 UPLOAD_FOLDER = 'uploads'

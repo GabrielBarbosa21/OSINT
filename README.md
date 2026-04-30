@@ -1,182 +1,147 @@
-# 🔍 Detetive de Identidade Digital
+# Detetive de Identidade Digital v1.0
 
-Uma ferramenta OSINT (Open Source Intelligence) para verificação de identidade e detecção de fraudes com conformidade LGPD.
+## Visão Geral
 
-## ✨ O que faz?
+O **Detetive de Identidade Digital** é uma ferramenta avançada de OSINT (Open Source Intelligence) desenvolvida para auxiliar na verificação de identidades digitais e no combate a fraudes online. Utilizando técnicas de inteligência de fontes abertas, o sistema analisa imagens de perfil para identificar possíveis usos fraudulentos em plataformas sociais, contribuindo para a proteção de usuários e organizações contra ameaças digitais.
 
-1. **Upload de Imagem**: Você envia uma foto
-2. **Google Lens Reverso**: Busca a imagem na web usando SerpApi
-3. **Análise IA**: Groq verifica se todos os links encontrados pertencem à mesma pessoa
-4. **Resultado**: Recebe análise de risco (BAIXO/MÉDIO/ALTO/CRÍTICO) com recomendações
-5. **Privacidade**: Foto deletada automaticamente (LGPD)
+A versão 1.0 oferece uma interface web intuitiva que permite o upload de imagens, processamento automatizado via APIs especializadas e apresentação de resultados com evidências visuais, mantendo total conformidade com regulamentações de privacidade.
 
----
+## Arquitetura do Sistema
 
-## 🚀 Início Rápido
-
-### 1. Instalar Dependências
-
-```bash
-pip install -r requirements.txt
-```
-
-Ou instale manualmente:
-
-```bash
-pip install flask groq google-search-results werkzeug requests python-dotenv
-```
-
-### 2. Configurar Chaves de API
-
-Edite `detetive.py` e adicione suas chaves:
-
-```python
-GROQ_API_KEY = "sua_chave_groq"        # https://console.groq.com/
-SERPAPI_API_KEY = "sua_chave_serpapi"  # https://serpapi.com/
-```
-
-### 3. Executar o Servidor
-
-```bash
-python detetive.py
-```
-
-Acesse: **http://localhost:5000**
-
----
-
-## 📋 Recursos Implementados
-
-### Backend (detetive.py)
-- ✅ Upload seguro com validação
-- ✅ Integração SerpApi para Google Lens reverso
-- ✅ Análise com IA Groq (llama-3.3-70b-versatile)
-- ✅ Detecção de fake/golpe
-- ✅ Deleção automática (LGPD)
-- ✅ Tratamento de erros robusto
-
-### Frontend (index.html)
-- ✅ Dark Mode moderno
-- ✅ Drag-and-drop de imagens
-- ✅ Interface responsiva
-- ✅ Spinner de carregamento
-- ✅ Exibição de resultados formatados
-- ✅ Nota de privacidade LGPD
-
----
-
-## 🔒 Segurança & LGPD
-
-- 🔐 Nomes de arquivo seguros (`secure_filename`)
-- 🔐 Validação de tipos (PNG, JPG, JPEG, GIF, WEBP, BMP)
-- 🔐 Limite de tamanho: 10MB
-- 🔐 Deletação imediata de arquivos
-- 🔐 Sem armazenamento permanente
-- 🔐 Conformidade com LGPD
-
----
-
-## 📁 Estrutura do Projeto
+O sistema foi projetado com uma arquitetura modular e escalável, seguindo princípios de engenharia de software moderna:
 
 ```
-detetive_ofertas/
-├── detetive.py              # Backend Flask
-├── templates/
-│   └── index.html           # Frontend
-├── uploads/                 # Imagens temporárias (auto-criado)
-├── requirements.txt         # Dependências
-├── .env.example            # Exemplo de configuração
-├── SETUP.md                # Guia detalhado
-└── README.md               # Este arquivo
+Frontend (HTML/CSS/JS) → Backend Flask → Servidor Temporário → APIs Externas → Resposta Processada
 ```
 
+### Componentes Principais:
+
+- **Frontend**: Interface responsiva desenvolvida com HTML5, CSS3 moderno e JavaScript vanilla, proporcionando experiência de usuário fluida com animações e interações dinâmicas.
+
+- **Backend Flask**: Servidor web Python utilizando o framework Flask para gerenciar requisições HTTP, processamento de formulários e coordenação de APIs externas.
+
+- **Servidor Temporário**: Sistema de armazenamento temporário para processamento de imagens, com limpeza automática após análise.
+
+- **APIs Externas**: Integração com serviços de busca visual (SerpApi) e processamento de linguagem natural (Groq) para análise inteligente de resultados.
+
+- **Processamento de Resposta**: Análise estruturada dos dados retornados, categorização por domínio e apresentação organizada.
+
+## Segurança e Privacidade
+
+A segurança e privacidade dos dados são prioridades fundamentais do sistema:
+
+- **Conformidade LGPD**: O projeto foi desenvolvido seguindo rigorosamente as normas da Lei Geral de Proteção de Dados (LGPD), garantindo transparência no tratamento de informações pessoais.
+
+- **Limpeza Automática**: Todos os arquivos temporários são automaticamente removidos do servidor imediatamente após o processamento, não mantendo cópias ou backups.
+
+- **Sem Armazenamento Persistente**: O sistema não armazena dados sensíveis, imagens ou metadados em bancos de dados ou sistemas de arquivo permanentes.
+
+- **Processamento Temporário**: As imagens são processadas apenas durante a sessão de análise e descartadas automaticamente.
+
+- **Transparência**: O usuário é informado sobre todas as operações realizadas e tem controle total sobre os dados enviados.
+
+## Tecnologias Utilizadas
+
+- **Backend**: Python 3.x com Flask framework
+- **Frontend**: HTML5, CSS3 (design moderno com gradientes e animações), JavaScript vanilla
+- **APIs Externas**:
+  - SerpApi (Google Lens API) para busca visual reversa
+  - Groq API para processamento de linguagem natural e análise inteligente
+- **Infraestrutura**: Servidor web com suporte a uploads temporários e limpeza automática
+
+## Guia de Instalação
+
+### Pré-requisitos
+
+- Python 3.8 ou superior
+- Ambiente virtual (recomendado)
+- Conexão com internet para acesso às APIs
+
+### Passo a Passo
+
+1. **Clone o repositório**:
+   ```bash
+   git clone <url-do-repositorio>
+   cd detetive-identidade-digital
+   ```
+
+2. **Crie um ambiente virtual**:
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # Linux/Mac
+   # ou
+   venv\Scripts\activate     # Windows
+   ```
+
+3. **Instale as dependências**:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Configure as variáveis de ambiente**:
+   - Copie o arquivo `.env.example` para `.env`
+   - Edite o arquivo `.env` com suas chaves de API:
+     ```
+     SERPAPI_KEY=sua-chave-serpapi-aqui
+     GROQ_API_KEY=sua-chave-groq-aqui
+     ```
+   - **Importante**: Nunca commite o arquivo `.env` real no repositório
+
+5. **Execute o servidor**:
+   ```bash
+   python detetive.py
+   ```
+
+6. **Acesse a aplicação**:
+   - Abra o navegador em `http://localhost:5000`
+   - Faça upload de uma imagem para iniciar a análise
+
+### Verificação da Instalação
+
+Após iniciar o servidor, você deve ver:
+- Interface web responsiva carregando corretamente
+- Capacidade de fazer upload de imagens
+- Processamento automático com barra de progresso
+- Resultados organizados em grade com filtros
+
+## Funcionalidades v1.0
+
+- ✅ Upload seguro de imagens
+- ✅ Busca visual reversa automatizada
+- ✅ Análise inteligente com IA
+- ✅ Interface responsiva com animações
+- ✅ Filtros por domínio (Instagram, LinkedIn, Outros)
+- ✅ Modal de visualização ampliada
+- ✅ Sistema de paginação expansível
+- ✅ Logs detalhados do processamento
+- ✅ Conformidade LGPD com limpeza automática
+
+## O que Esperar da v1.1 (Roadmap)
+
+A próxima versão trará melhorias significativas na profundidade da análise:
+
+- **Busca Aprofundada**: Implementação de algoritmos de busca recursiva para descobrir conexões indiretas e perfis relacionados.
+
+- **Relatórios em PDF**: Geração automática de relatórios estruturados em formato PDF, incluindo:
+  - Análise detalhada dos resultados
+  - Timeline de descobertas
+  - Recomendações de ação
+  - Metadados técnicos preservados
+
+- **Dashboard Analítico**: Interface aprimorada com métricas de confiança e visualizações de rede de conexões.
+
+- **Integração com Múltiplas Fontes**: Expansão para outras plataformas além do Google Lens.
+
+- **API REST**: Exposição de endpoints para integração com outros sistemas.
+
+## Contribuição
+
+Este projeto foi desenvolvido como uma demonstração de engenharia de software aplicada à cibersegurança. Para sugestões ou colaborações, entre em contato através dos canais apropriados.
+
+## Licença
+
+Este projeto é distribuído sob licença proprietária. Consulte os termos de uso para mais informações.
+
 ---
 
-## 🎯 Como Usar
-
-1. **Abra a aplicação**: http://localhost:5000
-2. **Selecione uma imagem** (ou arraste)
-3. **Clique em "Verificar Identidade"**
-4. **Aguarde a análise** (30-60 segundos)
-5. **Veja o relatório** com nível de risco
-
----
-
-## 📊 Exemplo de Resultado
-
-```
-⚠️ RISCO: MÉDIO
-🔍 ANÁLISE: A imagem encontrada em 3 fontes diferentes com nomes consistentes.
-            Padrão indica conta potencialmente legítima, mas com presença em múltiplas plataformas.
-
-🚩 BANDEIRAS VERMELHAS: 
-   - Conta criada há menos de 6 meses
-   - Múltiplas variações de perfil com mesma foto
-
-✅ RECOMENDAÇÃO: Verificar credibilidade através de contatos diretos e confirmar identidade
-```
-
----
-
-## 🔧 Configuração Avançada
-
-### Usar com .env
-
-1. Crie arquivo `.env` baseado em `.env.example`
-2. Preencha suas chaves
-3. Modifique `detetive.py`:
-
-```python
-from dotenv import load_dotenv
-import os
-
-load_dotenv()
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-SERPAPI_API_KEY = os.getenv("SERPAPI_API_KEY")
-```
-
-### Aumentar Limite de Upload
-
-Em `detetive.py`:
-```python
-MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
-```
-
----
-
-## 🛠️ Troubleshooting
-
-| Problema | Solução |
-|----------|---------|
-| Módulo não encontrado | `pip install --upgrade [módulo]` |
-| Erro 401 SerpApi | Verificar chave de API e créditos |
-| Pasta uploads não criada | Criar manualmente ou reiniciar |
-| Porta 5000 já em uso | Mudar em `app.run(port=5001)` |
-
----
-
-## 📚 Documentação
-
-- [SETUP.md](SETUP.md) - Guia completo de instalação
-- [.env.example](.env.example) - Template de variáveis de ambiente
-
----
-
-## 🤝 Contribuições
-
-Este projeto é para uso educacional e de autoproteção.
-
-**Lembre-se**: Use responsavelmente e respeite a privacidade das pessoas.
-
----
-
-## ⚖️ Conformidade Legal
-
-- ✅ LGPD (Lei Geral de Proteção de Dados - Brasil)
-- ✅ Sem armazenamento permanente de dados
-- ✅ Deletação imediata de arquivos
-- ✅ Transparência sobre coleta de dados
-
----
-
-**Desenvolvido com ❤️ para segurança digital**
+**Desenvolvido com foco em engenharia de software e responsabilidade ética no tratamento de dados.**

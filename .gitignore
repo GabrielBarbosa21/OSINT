@@ -1,0 +1,23 @@
+# Configurações de Ambiente (Obrigatório esconder)
+.env
+.env.local
+.env.secret
+
+# Pastas de Upload (Não enviar fotos de testes para o Git)
+uploads/
+temp/
+
+# Python (Arquivos gerados pelo sistema)
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+
+# Sistema Operacional
+.DS_Store
+Thumbs.db
+
+# Logs do Flask/Python
+*.log
