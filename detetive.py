@@ -2,14 +2,15 @@ import os
 import requests
 from flask import Flask, render_template, request, jsonify
 from dotenv import load_dotenv
+import base64
 
 load_dotenv()
 
 # CORREÇÃO AQUI: 
 # Opção A: Se você tem um arquivo .env, use: SERPAPI_API_KEY = os.getenv("SERPAPI_KEY")
 # Opção B (Mais rápida para testar): Coloque a chave direto na variável:
-SERPAPI_API_KEY = "SUA_CHAVE_AQUI"  # Substitua pela sua chave real
-
+SERPAPI_API_KEY = "SUA_API_KEY"  # Substitua pela sua chave real
+prefixo_chave = SERPAPI_API_KEY[:6] 
 app = Flask(__name__)
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -23,7 +24,7 @@ def verificar_identidade():
     logs = []
     
     # Validação da chave
-    if not SERPAPI_API_KEY or "6f15cf" not in SERPAPI_API_KEY:
+    if not SERPAPI_API_KEY or prefixo_chave not in SERPAPI_API_KEY:
         logs.append("❌ Erro: Chave SerpApi inválida ou não encontrada.")
         return jsonify({"erro": "Configuração de API pendente", "logs": logs}), 500
 
@@ -37,19 +38,39 @@ def verificar_identidade():
     logs.append(f"📤 Imagem '{foto.filename}' recebida.")
 
     try:
-        # PASSO 1: Link temporário (Catbox é bom, mas vamos garantir o timeout)
-        logs.append("☁️ Gerando link público para o Google Lens...")
-        with open(filepath, 'rb') as f:
-            # Usando o serviço transfer.sh como alternativa rápida caso o catbox falhe
-            up = requests.post('https://catbox.moe/user/api.php', 
-                               data={'reqtype': 'fileupload'}, 
-                               files={'fileToUpload': f}, timeout=15)
-            url_publica = up.text.strip()
+
+
+# ... dentro da sua função ...
+
+        # PASSO 1: Link público via ImgBB
+        logs.append("☁️ Gerando link público via ImgBB...")
         
-        logs.append(f"🔗 Link gerado: {url_publica}")
+        with open(filepath, 'rb') as f:
+            # Lendo a imagem e convertendo para base64
+            img_data = f.read()
+            
+            payload = {
+                "key": "SUA_API_KEY_DO_IMGBB_AQUI", # Substitua pela sua chave do ImgBB
+                "image": base64.b64encode(img_data)
+            }
+            
+            try:
+                up = requests.post('https://api.imgbb.com/1/upload', data=payload, timeout=20)
+                up.raise_for_status() # Garante que o request funcionou
+                
+                json_data = up.json()
+                url_publica = json_data['data']['url']
+                
+                logs.append(f"🔗 Link gerado: {url_publica}")
+                
+            except Exception as e:
+                logs.append(f"❌ Erro no upload: {str(e)}")
+                # Aqui você pode tratar o erro ou retornar
+                return "Erro ao processar imagem"
+
         logs.append("🔎 Consultando SerpApi (Google Lens)...")
 
-        # PASSO 2: Chamada real para a API
+        # PASSO 2: Chamada para a SerpApi (continua igual)
         params = {
             "engine": "google_lens",
             "url": url_publica,
@@ -64,7 +85,7 @@ def verificar_identidade():
         logs.append(f"✅ Busca concluída. {len(matches)} resultados encontrados.")
 
         resultados_finais = []
-        for m in matches[:8]:
+        for m in matches[:100]:  # Limitando a 100 resultados para evitar sobrecarga
             resultados_finais.append({
                 "title": m.get("title"),
                 "link": m.get("link"),
