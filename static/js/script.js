@@ -272,9 +272,9 @@ function renderImages() {
         
         let thumbnailHTML = '';
         if (img.thumbnail) {
-            thumbnailHTML = `<img src="${img.thumbnail}" alt="Thumbnail ${idx + 1}">`;
+            thumbnailHTML = `<img src="${img.thumbnail}" alt="Thumbnail ${idx + 1}" referrerpolicy="no-referrer" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><div class="placeholder" style="display: none; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #2d3561; color: #666;">🔍</div>`;
         } else {
-            thumbnailHTML = '<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #2d3561; color: #666;">🖼️</div>';
+            thumbnailHTML = '<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #2d3561; color: #666;">🔍</div>';
         }
 
         card.innerHTML = `
@@ -319,6 +319,7 @@ function loadMoreImages() {
 // Modal functions
 function openModal(img) {
     modalImage.src = img.thumbnail || '';
+    modalImage.setAttribute('referrerpolicy', 'no-referrer');
     modalTitle.textContent = img.title || 'Sem título';
     modalSource.textContent = `Fonte: ${img.source || 'Desconhecida'}`;
     modalLink.href = img.link || '#';

@@ -9,8 +9,33 @@ load_dotenv()
 # CORREÇÃO AQUI: 
 # Opção A: Se você tem um arquivo .env, use: SERPAPI_API_KEY = os.getenv("SERPAPI_KEY")
 # Opção B (Mais rápida para testar): Coloque a chave direto na variável:
-SERPAPI_API_KEY = "SUA_API_KEY"  # Substitua pela sua chave real
-prefixo_chave = SERPAPI_API_KEY[:6] 
+SERPAPI_API_KEY = "SUA_CHAVE"  # Substitua pela sua chave real
+prefixo_chave = SERPAPI_API_KEY[:6]
+
+
+def buscar_yandex(url):
+    """Busca imagens no SerpApi usando o mecanismo Yandex Images."""
+    params = {
+        "engine": "yandex_images",
+        "url": url,
+        "api_key": SERPAPI_API_KEY
+    }
+    response = requests.get("https://serpapi.com/search", params=params, timeout=20)
+    response.raise_for_status()
+    data = response.json()
+    matches = data.get("image_results") or data.get("images_results") or []
+
+    resultados = []
+    for m in matches[:100]:
+        resultados.append({
+            "title": m.get("title"),
+            "link": m.get("link"),
+            "source": m.get("source"),
+            "thumbnail": m.get("thumbnail")
+        })
+    return resultados
+
+
 app = Flask(__name__)
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -50,7 +75,7 @@ def verificar_identidade():
             img_data = f.read()
             
             payload = {
-                "key": "SUA_API_KEY_DO_IMGBB_AQUI", # Substitua pela sua chave do ImgBB
+                "key": "SUA_CHAVE", # Substitua pela sua chave do ImgBB
                 "image": base64.b64encode(img_data)
             }
             
@@ -68,30 +93,40 @@ def verificar_identidade():
                 # Aqui você pode tratar o erro ou retornar
                 return "Erro ao processar imagem"
 
-        logs.append("🔎 Consultando SerpApi (Google Lens)...")
+        logs.append("🔎 Consultando SerpApi (Google Lens) e Yandex...")
 
-        # PASSO 2: Chamada para a SerpApi (continua igual)
+        # PASSO 2: Chamada para a SerpApi Google Lens
         params = {
             "engine": "google_lens",
             "url": url_publica,
             "api_key": SERPAPI_API_KEY
         }
-        
         response = requests.get("https://serpapi.com/search", params=params, timeout=20)
+        response.raise_for_status()
         data = response.json()
-
-        # Extraindo resultados
         matches = data.get("visual_matches", [])
-        logs.append(f"✅ Busca concluída. {len(matches)} resultados encontrados.")
 
-        resultados_finais = []
-        for m in matches[:100]:  # Limitando a 100 resultados para evitar sobrecarga
-            resultados_finais.append({
+        resultados_lens = []
+        for m in matches[:1000]:  # Limitando a 100 resultados para evitar sobrecarga
+            resultados_lens.append({
                 "title": m.get("title"),
                 "link": m.get("link"),
                 "source": m.get("source"),
-                "thumbnail": m.get("thumbnail") # Essa é a imagem que vai aparecer no seu site
+                "thumbnail": m.get("thumbnail")
             })
+
+        resultados_yandex = buscar_yandex(url_publica)
+        logs.append(f"✅ Busca Google Lens: {len(resultados_lens)} resultados; Yandex: {len(resultados_yandex)} resultados.")
+
+        # Combina resultados e remove links duplicados
+        resultados_finais = []
+        links_vistos = set()
+        for item in resultados_lens + resultados_yandex:
+            link = item.get("link")
+            if not link or link in links_vistos:
+                continue
+            links_vistos.add(link)
+            resultados_finais.append(item)
 
         # Limpeza LGPD
         if os.path.exists(filepath):
