@@ -6,12 +6,11 @@ import base64
 
 load_dotenv()
 
-# CORREÇÃO AQUI: 
-# Opção A: Se você tem um arquivo .env, use: SERPAPI_API_KEY = os.getenv("SERPAPI_KEY")
-# Opção B (Mais rápida para testar): Coloque a chave direto na variável:
-SERPAPI_API_KEY = "SUA_CHAVE"  # Substitua pela sua chave real
-prefixo_chave = SERPAPI_API_KEY[:6]
+# AJUSTE VERCEL: Se não achar no .env local, ele pega as chaves secretas do painel do Vercel
+SERPAPI_API_KEY = os.getenv("SERPAPI_KEY", "chave")
+IMGBB_API_KEY = os.getenv("IMGBB_KEY", "chave")
 
+prefixo_chave = SERPAPI_API_KEY[:6]
 
 def buscar_yandex(url):
     """Busca imagens no SerpApi usando o mecanismo Yandex Images."""
@@ -20,25 +19,29 @@ def buscar_yandex(url):
         "url": url,
         "api_key": SERPAPI_API_KEY
     }
-    response = requests.get("https://serpapi.com/search", params=params, timeout=20)
-    response.raise_for_status()
-    data = response.json()
-    matches = data.get("image_results") or data.get("images_results") or []
+    try:
+        response = requests.get("https://serpapi.com/search", params=params, timeout=20)
+        response.raise_for_status()
+        data = response.json()
+        matches = data.get("image_results") or data.get("images_results") or []
+        
+        resultados = []
+        for m in matches[:100]:
+            resultados.append({
+                "title": m.get("title"),
+                "link": m.get("link"),
+                "source": m.get("source"),
+                "thumbnail": m.get("thumbnail")
+            })
+        return resultados
+    except Exception:
+        return [] # Se o Yandex falhar, o site não quebra e continua com o Google Lens
 
-    resultados = []
-    for m in matches[:100]:
-        resultados.append({
-            "title": m.get("title"),
-            "link": m.get("link"),
-            "source": m.get("source"),
-            "thumbnail": m.get("thumbnail")
-        })
-    return resultados
-
-
+# Cria o aplicativo Flask
 app = Flask(__name__)
-UPLOAD_FOLDER = 'uploads'
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+# AJUSTE VERCEL: Na nuvem, a única pasta que permite salvar arquivos temporários é a /tmp
+UPLOAD_FOLDER = '/tmp'
 
 @app.route('/')
 def index():
@@ -48,7 +51,6 @@ def index():
 def verificar_identidade():
     logs = []
     
-    # Validação da chave
     if not SERPAPI_API_KEY or prefixo_chave not in SERPAPI_API_KEY:
         logs.append("❌ Erro: Chave SerpApi inválida ou não encontrada.")
         return jsonify({"erro": "Configuração de API pendente", "logs": logs}), 500
@@ -63,39 +65,28 @@ def verificar_identidade():
     logs.append(f"📤 Imagem '{foto.filename}' recebida.")
 
     try:
-
-
-# ... dentro da sua função ...
-
-        # PASSO 1: Link público via ImgBB
         logs.append("☁️ Gerando link público via ImgBB...")
         
         with open(filepath, 'rb') as f:
-            # Lendo a imagem e convertendo para base64
             img_data = f.read()
-            
             payload = {
-                "key": "SUA_CHAVE", # Substitua pela sua chave do ImgBB
+                "key": IMGBB_API_KEY,
                 "image": base64.b64encode(img_data)
             }
             
             try:
                 up = requests.post('https://api.imgbb.com/1/upload', data=payload, timeout=20)
-                up.raise_for_status() # Garante que o request funcionou
-                
+                up.raise_for_status()
                 json_data = up.json()
                 url_publica = json_data['data']['url']
-                
                 logs.append(f"🔗 Link gerado: {url_publica}")
-                
             except Exception as e:
-                logs.append(f"❌ Erro no upload: {str(e)}")
-                # Aqui você pode tratar o erro ou retornar
-                return "Erro ao processar imagem"
+                logs.append(f"❌ Erro no upload ImgBB: {str(e)}")
+                return jsonify({"erro": "Falha no upload da imagem", "logs": logs}), 500
 
         logs.append("🔎 Consultando SerpApi (Google Lens) e Yandex...")
 
-        # PASSO 2: Chamada para a SerpApi Google Lens
+        # Chamada Google Lens
         params = {
             "engine": "google_lens",
             "url": url_publica,
@@ -107,7 +98,7 @@ def verificar_identidade():
         matches = data.get("visual_matches", [])
 
         resultados_lens = []
-        for m in matches[:1000]:  # Limitando a 100 resultados para evitar sobrecarga
+        for m in matches[:100]:
             resultados_lens.append({
                 "title": m.get("title"),
                 "link": m.get("link"),
@@ -118,7 +109,7 @@ def verificar_identidade():
         resultados_yandex = buscar_yandex(url_publica)
         logs.append(f"✅ Busca Google Lens: {len(resultados_lens)} resultados; Yandex: {len(resultados_yandex)} resultados.")
 
-        # Combina resultados e remove links duplicados
+        # Unifica e remove duplicados
         resultados_finais = []
         links_vistos = set()
         for item in resultados_lens + resultados_yandex:
@@ -132,15 +123,18 @@ def verificar_identidade():
         if os.path.exists(filepath):
             os.remove(filepath)
 
+        # CORREÇÃO DO ERRO JSON: Retornando o jsonify correto para o sucesso
         return jsonify({
             "sucesso": True,
-            "risco": "MÉDIO" if len(matches) > 0 else "BAIXO",
-            "analise": f"Foram encontrados {len(matches)} sites com imagens similares.",
+            "risco": "MÉDIO" if len(resultados_finais) > 0 else "BAIXO",
+            "analise": f"Foram encontrados {len(resultados_finais)} sites com imagens similares.",
             "detalhes": resultados_finais,
             "logs": logs
         })
 
     except Exception as e:
+        if os.path.exists(filepath): os.remove(filepath)
         return jsonify({"erro": str(e), "logs": [f"💥 Erro: {str(e)}"]}), 500
-if __name__ == '__main__':
-    app.run(debug=True)
+
+# AJUSTE VERCEL: Necessário para a nuvem reconhecer o ponto de partida do Flask
+app.debug = True
